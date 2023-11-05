@@ -1,25 +1,55 @@
-use std::env;
+use std::fs;
 use std::io::{self, BufRead};
 
 fn main() {
+    let path = "output.txt";
+
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
-    env::set_var("RUST_BACKTRACE", "1");
+    let mut contains_piece = false;
+    let mut input = String::new();
+    let mut piece_width = 0;
+    let mut piece_height = 0;
 
+    while contains_piece == false {
+        let line = lines
+            .next()
+            .expect("Expected Anfield grid line")
+            .expect("Failed to read line");
+        input = input + &line + "\n";
+        if line.contains("Piece") {
+            contains_piece = true;
+            let piece_sizes: Vec<usize> = line
+                .split_whitespace()
+                .skip(1) // Skip the word 'Piece'
+                .take(2) // Take the next two numbers
+                .map(|num| {
+                    num.trim_end_matches(':')
+                        .parse()
+                        .expect("Failed to parse piece size")
+                })
+                .collect();
+
+            (piece_width, piece_height) = (piece_sizes[0], piece_sizes[1]);
+        }
+    }
+    for _ in 0..piece_height {
+        let line: String = lines
+            .next()
+            .expect("Expected piece grid line")
+            .expect("Failed to read line");
+        input = input + &line + "\n";
+    }
+    let input_clone = input.clone();
+    let _ = fs::write(path, input_clone);
+    let mut input = input.lines();
     // Read the exec line and determine the player
-    let exec_line = lines
-        .next()
-        .expect("Expected exec line")
-        .expect("Failed to read line");
+    let exec_line = input.next().expect("Expected exec line");
     let player = if exec_line.contains("p1") { "p1" } else { "p2" };
     let opponent = if player.contains("1") { "p2" } else { "p1" };
-    println!("Player: {}", player);
 
     // Read the Anfield size line
-    let anfield_line = lines
-        .next()
-        .expect("Expected Anfield size line")
-        .expect("Failed to read line");
+    let anfield_line = input.next().expect("Expected Anfield size line");
     let sizes: Vec<usize> = anfield_line
         .split_whitespace()
         .skip(1) // Skip the name 'Anfield'
@@ -32,38 +62,34 @@ fn main() {
         .collect();
 
     let (anfield_width, anfield_height) = (sizes[0], sizes[1]);
-    println!(
-        "Anfield Width: {}, Height: {}",
-        anfield_width, anfield_height
-    );
 
     // Skip the colon line
-    lines
-        .next()
-        .expect("Expected colon line")
-        .expect("Failed to read line");
+    input.next().expect("Expected colon line");
 
     // Read the Anfield grid and find the starting position
     let mut my_start_position = (0, 0);
-    let my_start_char = if player == "p1" { '@' } else { '$' };
+    let my_start_chars = if player == "p1" { "a@" } else { "s$" };
     let mut found_my_start = false;
 
     let mut opponent_start_position = (0, 0);
-    let opponent_start_char = if player == "p1" { '$' } else { '@' };
+    let opponent_start_chars = if player == "p1" { "s$" } else { "a@" };
     let mut found_opponent_start = false;
     for y in 0..anfield_height {
-        let line = lines
-            .next()
-            .expect("Expected Anfield grid line")
-            .expect("Failed to read line");
-        if let Some(x) = line.find(my_start_char) {
-            my_start_position = (x, y);
-            found_my_start = true;
-            //break; // We found the start position, no need to continue
+        let line = input.next().expect("Expected Anfield grid line");
+        for (i, c) in line.chars().enumerate() {
+            if my_start_chars.contains(c) {
+                my_start_position = (i, y);
+                found_my_start = true;
+                break; // We found a start position, no need to continue
+            }
         }
-        if let Some(x) = line.find(opponent_start_char) {
-            opponent_start_position = (x, y);
-            found_opponent_start = true;
+
+        for (i, c) in line.chars().enumerate() {
+            if opponent_start_chars.contains(c) {
+                opponent_start_position = (i, y);
+                found_opponent_start = true;
+                break; // We found a start position, no need to continue
+            }
         }
     }
 
@@ -75,21 +101,8 @@ fn main() {
         eprintln!("Failed to find start position for player {}", opponent);
     }
 
-    println!(
-        "My start Position: ({}, {})",
-        my_start_position.0, my_start_position.1
-    );
-    println!(
-        "Opponent startposition({}, {})",
-        opponent_start_position.0, opponent_start_position.1
-    );
-
     // Read the Piece size line
-    let piece_line = lines
-        .next()
-        .expect("Expected piece size line")
-        .expect("Failed to read line");
-    println!("The piece size is {} ", piece_line);
+    let piece_line = input.next().expect("Expected piece size line");
     let piece_sizes: Vec<usize> = piece_line
         .split_whitespace()
         .skip(1) // Skip the word 'Piece'
@@ -101,8 +114,7 @@ fn main() {
         })
         .collect();
 
-    let (piece_width, piece_height) = (piece_sizes[0], piece_sizes[1]);
-    println!("Piece Width: {}, Height: {}", piece_width, piece_height);
+    (piece_width, piece_height) = (piece_sizes[0], piece_sizes[1]);
 
     // Skip the colon line
     // lines
@@ -113,15 +125,11 @@ fn main() {
     // Read the piece grid
     let mut piece = Vec::new();
     for _ in 0..piece_height {
-        let line = lines
-            .next()
-            .expect("Expected piece grid line")
-            .expect("Failed to read line");
+        let line: &str = input.next().expect("Expected piece grid line");
         piece.push(line.chars().collect::<Vec<char>>());
     }
 
     // Print the piece just for confirmation
-    println!("Piece:");
     for row in piece.iter() {
         println!("{:?}", row);
     }
