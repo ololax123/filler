@@ -1,14 +1,16 @@
-use std::fs;
+use r2_d2::anfield::*;
+use r2_d2::piece::*;
+use r2_d2::player::*;
 use std::io::{self, BufRead};
+//use std::fs;
 
 fn main() {
-    let path = "output.txt";
+    //let path = "output.txt";
 
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
     let mut contains_piece = false;
     let mut input = String::new();
-    let mut piece_width = 0;
     let mut piece_height = 0;
 
     while contains_piece == false {
@@ -30,7 +32,7 @@ fn main() {
                 })
                 .collect();
 
-            (piece_width, piece_height) = (piece_sizes[0], piece_sizes[1]);
+            piece_height = piece_sizes[1];
         }
     }
     for _ in 0..piece_height {
@@ -40,97 +42,56 @@ fn main() {
             .expect("Failed to read line");
         input = input + &line + "\n";
     }
-    let input_clone = input.clone();
-    let _ = fs::write(path, input_clone);
+    let mut player = Player::new();
+    let mut opponent = Player::new();
+    let mut anfield = Anfield::new();
+    let mut piece = Piece::new();
+
+    // //Clone input and dump into file
+    // let input_clone = input.clone();
+    // let _ = fs::write(path, input_clone);
+
+    // Start reading the input
     let mut input = input.lines();
-    // Read the exec line and determine the player
-    let exec_line = input.next().expect("Expected exec line");
-    let player = if exec_line.contains("p1") { "p1" } else { "p2" };
-    let opponent = if player.contains("1") { "p2" } else { "p1" };
+
+    //Get the player & Opponent info
+    let player_line = input.next().expect("Expected exec line");
+    player.get_start_info(player_line);
+    (opponent.num, opponent.start_chars) = if player.num == 1 {
+        (2, "s$".to_string())
+    } else {
+        (1, "a@".to_string())
+    };
 
     // Read the Anfield size line
     let anfield_line = input.next().expect("Expected Anfield size line");
-    let sizes: Vec<usize> = anfield_line
-        .split_whitespace()
-        .skip(1) // Skip the name 'Anfield'
-        .take(2) // Take the next two numbers
-        .map(|num| {
-            num.trim_end_matches(':')
-                .parse()
-                .expect("Failed to parse Anfield size")
-        })
-        .collect();
+    anfield.get_size(anfield_line);
 
-    let (anfield_width, anfield_height) = (sizes[0], sizes[1]);
+    // Skip the numbered line
+    input.next().expect("Expected numbered line");
 
-    // Skip the colon line
-    input.next().expect("Expected colon line");
-
-    // Read the Anfield grid and find the starting position
-    let mut my_start_position = (0, 0);
-    let my_start_chars = if player == "p1" { "a@" } else { "s$" };
-    let mut found_my_start = false;
-
-    let mut opponent_start_position = (0, 0);
-    let opponent_start_chars = if player == "p1" { "s$" } else { "a@" };
-    let mut found_opponent_start = false;
-    for y in 0..anfield_height {
+    // Create a clone of the field grid
+    let mut input_clone = String::new();
+    for _ in 0..anfield.height {
         let line = input.next().expect("Expected Anfield grid line");
-        for (i, c) in line.chars().enumerate() {
-            if my_start_chars.contains(c) {
-                my_start_position = (i, y);
-                found_my_start = true;
-                break; // We found a start position, no need to continue
-            }
-        }
-
-        for (i, c) in line.chars().enumerate() {
-            if opponent_start_chars.contains(c) {
-                opponent_start_position = (i, y);
-                found_opponent_start = true;
-                break; // We found a start position, no need to continue
-            }
-        }
+        input_clone.push_str(&line);
+        input_clone.push('\n'); // Adds a newline character.
     }
 
-    if !found_my_start {
-        eprintln!("Failed to find start position for player {}", player);
-        return;
-    }
-    if !found_opponent_start {
-        eprintln!("Failed to find start position for player {}", opponent);
-    }
+    //Get the start positions of player and opponent
+    player.get_start_positions(
+        input_clone.clone(),
+        player.start_chars.clone(),
+        &mut opponent,
+    );
 
-    // Read the Piece size line
+    //Get the piece size
     let piece_line = input.next().expect("Expected piece size line");
-    let piece_sizes: Vec<usize> = piece_line
-        .split_whitespace()
-        .skip(1) // Skip the word 'Piece'
-        .take(2) // Take the next two numbers
-        .map(|num| {
-            num.trim_end_matches(':')
-                .parse()
-                .expect("Failed to parse piece size")
-        })
-        .collect();
-
-    (piece_width, piece_height) = (piece_sizes[0], piece_sizes[1]);
-
-    // Skip the colon line
-    // lines
-    //     .next()
-    //     .expect("Expected colon line")
-    //     .expect("Failed to read line");
+    piece.get_size(piece_line);
 
     // Read the piece grid
-    let mut piece = Vec::new();
     for _ in 0..piece_height {
         let line: &str = input.next().expect("Expected piece grid line");
-        piece.push(line.chars().collect::<Vec<char>>());
-    }
-
-    // Print the piece just for confirmation
-    for row in piece.iter() {
-        println!("{:?}", row);
+        piece.grid.push(line.chars().collect::<Vec<char>>());
     }
 }
