@@ -46,6 +46,10 @@ impl Player {
                 if player_start_chars.contains(c) {
                     self.start_x = i;
                     self.start_y = y;
+                    self.min_x = i;
+                    self.min_y = y;
+                    self.max_x = i;
+                    self.max_y = y;
                     found_player_start = true;
                     break; // We found a start position, no need to continue
                 }
@@ -55,6 +59,10 @@ impl Player {
                 if opponent.start_chars.contains(c) {
                     opponent.start_x = i;
                     opponent.start_y = y;
+                    opponent.min_x = i;
+                    opponent.min_y = y;
+                    opponent.max_x = i;
+                    opponent.max_y = y;
                     found_opponent_start = true;
                     break; // We found a start position, no need to continue
                 }
@@ -73,5 +81,19 @@ impl Player {
                 opponent.start_chars
             );
         }
+    }
+
+    pub fn priority_direction(&mut self, opponent: Player) -> (bool, bool) {
+        let mut to_return: (bool, bool) = (false, false);
+        if self.start_x < opponent.start_x {
+            to_return.0 = true;
+        } else if self.start_x > opponent.start_x {
+            to_return.0 = false;
+        } else if self.start_y < opponent.start_y {
+            to_return.1 = true;
+        } else if self.start_y > opponent.start_y {
+            to_return.1 = false;
+        }
+        to_return
     }
 }

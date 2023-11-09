@@ -21,7 +21,7 @@ impl Anfield {
                     .expect("Failed to parse Anfield size")
             })
             .collect();
-        self.height = sizes[0];
-        self.width = sizes[1];
+        self.width = sizes[0];
+        self.height = sizes[1];
     }
 }

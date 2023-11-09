@@ -1,1 +1,1 @@
-cargo build && ./target/debug/r2_d2 < dummydata
+cargo build && ./target/debug/r2_d2 < output.txt

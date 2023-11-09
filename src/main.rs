@@ -69,7 +69,6 @@ fn main() {
 
     // Skip the numbered line
     input.next().expect("Expected numbered line");
-
     // Create a clone of the field grid
     let mut input_clone = String::new();
     for _ in 0..anfield.height {
@@ -94,4 +93,7 @@ fn main() {
         let line: &str = input.next().expect("Expected piece grid line");
         piece.grid.push(line.chars().collect::<Vec<char>>());
     }
+    let (go_x, go_y) = player.priority_direction(opponent);
+    let (place_x, place_y) = piece.place(&mut player, go_x, go_y, input_clone);
+    println!("{} {}", place_x, place_y);
 }
