@@ -14,6 +14,9 @@ impl Piece {
             grid: Vec::new(),
         }
     }
+    pub fn minimize(&mut self) {
+        //Strip all empty rows in the bottom and to the right
+    }
     pub fn get_size(&mut self, input: &str) {
         let piece_sizes: Vec<usize> = input
             .split_whitespace()
@@ -40,19 +43,23 @@ impl Piece {
 
         // Find all possible placements where the piece overlaps with exactly one player's character
         let mut valid_placements = Vec::new();
-
-        for y in 0..field.len() - self.height {
-            for x in 0..field[0].len() - self.width {
+        for y in 0..=field.len() {
+            if y > player.max_y {
+                continue;
+            }
+            for x in 0..=field[0].len() {
+                if x > player.max_x {
+                    continue;
+                }
                 if self.can_place_at(x, y, player, &field) {
-                    valid_placements.push((x - self.width - 1, y));
+                    valid_placements.push((x - 4, y));
                 }
             }
         }
-
         // If there are no valid placements, we cannot place the piece
         if valid_placements.is_empty() {
-            println!("No valid placement found.");
-            return (0, 0);
+            println!("{:?}", valid_placements);
+            println!("0 0");
         }
         // Determine the optimal placement based on go_x and go_y
         let optimal_placement = self.find_optimal_placement(&valid_placements, go_x, go_y);
@@ -83,17 +90,24 @@ impl Piece {
                     // increment the overlap count
                     (player_char, 'O') if player.start_chars.contains(player_char) => {
                         player_overlap += 1;
+                        if player_overlap > 1 {
+                            return false;
+                        }
                     }
 
                     // If the cell in the piece is part of the piece ('O') and the field has an opponent's piece ('#'),
                     // it's an invalid placement
-                    ('#', 'O') => return false,
+                    ('#', 'O') => {
+                        return false;
+                    }
 
                     // If the cell in the piece is empty and the field has any character, it's also a valid placement
                     (_, '.') => continue,
 
                     // Any other case is invalid
-                    _ => return false,
+                    _ => {
+                        return false;
+                    }
                 }
             }
         }
