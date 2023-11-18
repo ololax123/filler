@@ -58,8 +58,7 @@ impl Piece {
         }
         // If there are no valid placements, we cannot place the piece
         if valid_placements.is_empty() {
-            println!("{:?}", valid_placements);
-            println!("0 0");
+            valid_placements.push((0, 0));
         }
         // Determine the optimal placement based on go_x and go_y
         let optimal_placement = self.find_optimal_placement(&valid_placements, go_x, go_y);

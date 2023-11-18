@@ -2,10 +2,10 @@ use r2_d2::anfield::*;
 use r2_d2::piece::*;
 use r2_d2::player::*;
 use std::io::{self, BufRead};
-//use std::fs;
+// use std::fs;
 
 fn main() {
-    //let path = "output.txt";
+    // let path = "output.txt";
 
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
@@ -18,7 +18,9 @@ fn main() {
             .next()
             .expect("Expected Anfield grid line")
             .expect("Failed to read line");
+
         input = input + &line + "\n";
+
         if line.contains("Piece") {
             contains_piece = true;
             let piece_sizes: Vec<usize> = line
@@ -35,6 +37,7 @@ fn main() {
             piece_height = piece_sizes[1];
         }
     }
+
     for _ in 0..piece_height {
         let line: String = lines
             .next()
