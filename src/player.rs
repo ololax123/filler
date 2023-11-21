@@ -32,23 +32,18 @@ impl Player {
         };
     }
 
-    pub fn get_start_positions(
-        &mut self,
-        lines: String,
-        player_start_chars: String,
-        opponent: &mut Player,
-    ) {
+    pub fn get_start_positions(&mut self, lines: &String, opponent: &mut Player) {
         let mut found_player_start = false;
         let mut found_opponent_start = false;
 
         for (y, line) in lines.lines().enumerate() {
             for (i, c) in line.chars().enumerate() {
-                if player_start_chars.contains(c) {
-                    self.start_x = i;
+                if self.start_chars.contains(c) {
+                    self.start_x = i - 4;
                     self.start_y = y;
-                    self.min_x = i;
+                    self.min_x = i - 4;
                     self.min_y = y;
-                    self.max_x = i;
+                    self.max_x = i - 4;
                     self.max_y = y;
                     found_player_start = true;
                     break; // We found a start position, no need to continue
@@ -57,11 +52,11 @@ impl Player {
 
             for (i, c) in line.chars().enumerate() {
                 if opponent.start_chars.contains(c) {
-                    opponent.start_x = i;
+                    opponent.start_x = i - 4;
                     opponent.start_y = y;
-                    opponent.min_x = i;
+                    opponent.min_x = i - 4;
                     opponent.min_y = y;
-                    opponent.max_x = i;
+                    opponent.max_x = i - 4;
                     opponent.max_y = y;
                     found_opponent_start = true;
                     break; // We found a start position, no need to continue
@@ -72,7 +67,7 @@ impl Player {
         if !found_player_start {
             eprintln!(
                 "Failed to find start position for player {}",
-                player_start_chars
+                self.start_chars
             );
         }
         if !found_opponent_start {
@@ -83,7 +78,7 @@ impl Player {
         }
     }
 
-    pub fn priority_direction(&mut self, opponent: Player) -> (bool, bool) {
+    pub fn priority_direction(&mut self, opponent: &Player) -> (bool, bool) {
         let mut to_return: (bool, bool) = (false, false);
         if self.start_x < opponent.start_x {
             to_return.0 = true;

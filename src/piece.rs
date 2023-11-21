@@ -40,7 +40,6 @@ impl Piece {
     ) -> (usize, usize) {
         // Parse the playing field from the input string
         let field: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
-
         // Find all possible placements where the piece overlaps with exactly one player's character
         let mut valid_placements = Vec::new();
         for y in 0..=field.len() {
@@ -48,7 +47,7 @@ impl Piece {
                 continue;
             }
             for x in 4..=field[0].len() {
-                if x > player.max_x {
+                if x > player.max_x + 4 {
                     continue;
                 }
                 if self.can_place_at(x, y, player, &field) {
@@ -80,7 +79,6 @@ impl Piece {
                 if field_y >= field.len() || field_x >= field[0].len() {
                     return false;
                 }
-
                 match (field[field_y][field_x], cell) {
                     // If the cell in the piece is part of the piece ('O') and the field is empty ('.'), it's a valid placement
                     ('.', 'O') => continue,
@@ -96,7 +94,7 @@ impl Piece {
 
                     // If the cell in the piece is part of the piece ('O') and the field has an opponent's piece ('#'),
                     // it's an invalid placement
-                    ('#', 'O') => {
+                    ('s', 'O') => {
                         return false;
                     }
 
@@ -112,6 +110,7 @@ impl Piece {
         }
 
         // The placement is only valid if there is exactly one overlap with the player's characters
+
         player_overlap == 1
     }
     // Helper function to find the optimal placement from a list of valid placements

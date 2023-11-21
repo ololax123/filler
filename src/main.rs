@@ -1,112 +1,78 @@
 use r2_d2::anfield::*;
 use r2_d2::piece::*;
 use r2_d2::player::*;
-use std::fs::OpenOptions;
-use std::io::{self, BufRead, Write};
+// use std::fs::OpenOptions;
+use std::io::{self, BufRead};
 
 fn main() {
-    let path = "output.txt";
-    let mut file = OpenOptions::new()
-        .append(true) // Set the append mode
-        .create(true) // Create the file if it doesn't exist
-        .open(path)
-        .expect("Failed to open file"); // Handle the Result
-
-    let _ = file
-        .write_all("New run \n".as_bytes())
-        .expect("Failed to write to file"); // Handle potential write errors
+    // let path = "output.txt";
+    // let mut file = OpenOptions::new()
+    //     .append(true) // Set the append mode
+    //     .create(true) // Create the file if it doesn't exist
+    //     .open(path)
+    //     .expect("Failed to open file"); // Handle the Result
 
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
-    let mut contains_piece = false;
-    let mut input = String::new();
-    let mut piece_height = 0;
-    while contains_piece == false {
-        let line = lines
-            .next()
-            .expect("Expected Anfield grid line")
-            .expect("Failed to read line");
-        input = input + &line + "\n";
-
-        if line.contains("Piece") {
-            contains_piece = true;
-            let piece_sizes: Vec<usize> = line
-                .split_whitespace()
-                .skip(1) // Skip the word 'Piece'
-                .take(2) // Take the next two numbers
-                .map(|num| {
-                    num.trim_end_matches(':')
-                        .parse()
-                        .expect("Failed to parse piece size")
-                })
-                .collect();
-
-            piece_height = piece_sizes[1];
-        }
-    }
-
-    for _ in 0..piece_height {
-        let line: String = lines
-            .next()
-            .expect("Expected piece grid line")
-            .expect("Failed to read line");
-        input = input + &line + "\n";
-    }
     let mut player = Player::new();
     let mut opponent = Player::new();
-    let mut anfield = Anfield::new();
-    let mut piece = Piece::new();
 
-    // //Clone input and dump into file
-    let input_clone = input.clone();
-    // let _ = fs::write(path, input_clone);
-    let _ = file
-        .write_all(input_clone.as_bytes())
-        .expect("Failed to write to file"); // Handle potential write errors
-
-    // Start reading the input
-    let mut input = input.lines();
-
-    //Get the player & Opponent info
-    let player_line = input.next().expect("Expected exec line");
-    player.get_start_info(player_line);
-    (opponent.num, opponent.start_chars) = if player.num == 1 {
-        (2, "s$".to_string())
-    } else {
-        (1, "a@".to_string())
-    };
-
-    // Read the Anfield size line
-    let anfield_line = input.next().expect("Expected Anfield size line");
-    anfield.get_size(anfield_line);
-
-    // Skip the numbered line
-    input.next().expect("Expected numbered line");
-    // Create a clone of the field grid
-    let mut input_clone = String::new();
-    for _ in 0..anfield.height {
-        let line = input.next().expect("Expected Anfield grid line");
-        input_clone.push_str(&line);
-        input_clone.push('\n'); // Adds a newline character.
+    let line = lines
+        .next()
+        .expect("Expected exec line")
+        .expect("Failed to read line");
+    if line.contains("exec") {
+        player.get_start_info(&line);
+        (opponent.num, opponent.start_chars) = if player.num == 1 {
+            (2, "s$".to_string())
+        } else {
+            (1, "a@".to_string())
+        };
     }
 
-    //Get the start positions of player and opponent
-    player.get_start_positions(
-        input_clone.clone(),
-        player.start_chars.clone(),
-        &mut opponent,
-    );
+    loop {
+        let mut anfield = Anfield::new();
+        let mut anfield_area = String::new();
+        let mut piece = Piece::new();
+        //Check Anfield
+        let line = lines
+            .next()
+            .expect("Expected next line")
+            .expect("Failed to read line");
+        anfield.get_size(&line);
+        lines.next();
+        //Loop throught the anfield and save it.
+        for _ in 0..anfield.height {
+            let line = lines
+                .next()
+                .expect("Expected Anfield grid line")
+                .expect("Failed to read line");
+            anfield_area.push_str(&line);
+            anfield_area.push('\n'); // Adds a newline character.
+        }
 
-    //Get the piece size
-    let piece_line = input.next().expect("Expected piece size line");
-    piece.get_size(piece_line);
+        //Get player start positions
+        player.get_start_positions(&anfield_area, &mut opponent);
 
-    // Read the piece grid
-    for _ in 0..piece_height {
-        let line: &str = input.next().expect("Expected piece grid line");
-        piece.grid.push(line.chars().collect::<Vec<char>>());
+        //Skip down to piece
+        let line = lines
+            .next()
+            .expect("Expected next line")
+            .expect("Failed to read line");
+
+        piece.get_size(&line);
+        //Save piece grid
+        for _ in 0..piece.height {
+            let line = lines
+                .next()
+                .expect("Expected piece grid line")
+                .expect("Failed to read line");
+            piece.grid.push(line.chars().collect::<Vec<char>>());
+        }
+
+        //Calculate profits!
+        let (go_x, go_y) = player.priority_direction(&opponent);
+        let (place_x, place_y) = piece.place(&mut player, go_x, go_y, anfield_area);
+        print!("{} {}\n", place_x, place_y);
     }
-    let (go_x, go_y) = player.priority_direction(opponent);
-    let (place_x, place_y) = piece.place(&mut player, go_x, go_y, input_clone);
-    print!("{} {}\n", place_x, place_y);
 }
