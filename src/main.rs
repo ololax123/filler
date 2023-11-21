@@ -1,24 +1,31 @@
 use r2_d2::anfield::*;
 use r2_d2::piece::*;
 use r2_d2::player::*;
-use std::io::{self, BufRead};
-// use std::fs;
+use std::fs::OpenOptions;
+use std::io::{self, BufRead, Write};
 
 fn main() {
-    // let path = "output.txt";
+    let path = "output.txt";
+    let mut file = OpenOptions::new()
+        .append(true) // Set the append mode
+        .create(true) // Create the file if it doesn't exist
+        .open(path)
+        .expect("Failed to open file"); // Handle the Result
+
+    let _ = file
+        .write_all("New run \n".as_bytes())
+        .expect("Failed to write to file"); // Handle potential write errors
 
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
     let mut contains_piece = false;
     let mut input = String::new();
     let mut piece_height = 0;
-
     while contains_piece == false {
         let line = lines
             .next()
             .expect("Expected Anfield grid line")
             .expect("Failed to read line");
-
         input = input + &line + "\n";
 
         if line.contains("Piece") {
@@ -51,8 +58,11 @@ fn main() {
     let mut piece = Piece::new();
 
     // //Clone input and dump into file
-    // let input_clone = input.clone();
+    let input_clone = input.clone();
     // let _ = fs::write(path, input_clone);
+    let _ = file
+        .write_all(input_clone.as_bytes())
+        .expect("Failed to write to file"); // Handle potential write errors
 
     // Start reading the input
     let mut input = input.lines();
@@ -98,5 +108,5 @@ fn main() {
     }
     let (go_x, go_y) = player.priority_direction(opponent);
     let (place_x, place_y) = piece.place(&mut player, go_x, go_y, input_clone);
-    println!("{} {}", place_x, place_y);
+    print!("{} {}\n", place_x, place_y);
 }

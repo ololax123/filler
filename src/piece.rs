@@ -47,7 +47,7 @@ impl Piece {
             if y > player.max_y {
                 continue;
             }
-            for x in 0..=field[0].len() {
+            for x in 4..=field[0].len() {
                 if x > player.max_x {
                     continue;
                 }
