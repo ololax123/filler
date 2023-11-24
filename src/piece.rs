@@ -62,6 +62,20 @@ impl Piece {
         // Determine the optimal placement based on go_x and go_y
         let optimal_placement = self.find_optimal_placement(&valid_placements, go_x, go_y);
 
+        // Update max/min x/y
+        if player.max_x < optimal_placement.0 {
+            player.max_x = optimal_placement.0
+        }
+        if player.max_y < optimal_placement.1 {
+            player.max_y = optimal_placement.1
+        }
+        if player.min_x > optimal_placement.0 {
+            player.min_x = optimal_placement.0
+        }
+        if player.min_y > optimal_placement.1 {
+            player.min_y = optimal_placement.1
+        }
+
         optimal_placement
     }
 
