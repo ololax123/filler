@@ -51,9 +51,8 @@ pub fn short_distance(
                         // Did we dind the enemy?`.
                         if enemy.contains(&enemy_cell) {
                             // Make some maths and find the distnace #Pythagoras
-                            let dist = (((ye as f32) - (yg as f32)).powf(2.)
-                                + ((xe as f32) - (xg as f32)).powf(2.))
-                            .sqrt();
+                            let dist =
+                                ((((ye) - (yg)).pow(2) + ((xe) - (xg)).pow(2)) as f32).sqrt();
                             // If it's closer, save it.
                             min_dist = min_dist.min(dist);
                         }
