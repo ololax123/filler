@@ -1,9 +1,32 @@
-use crate::player::Player;
-
 pub struct Piece {
     pub height: usize,
-    pub width: usize,
     pub grid: Vec<Vec<char>>,
+}
+
+impl Piece {
+    pub fn new() -> Self {
+        Piece {
+            height: 0,
+            grid: Vec::new(),
+        }
+    }
+    pub fn minimize(&mut self) {
+        //Strip all empty rows in the bottom and to the right
+    }
+    pub fn get_size(&mut self, input: &str) {
+        let piece_sizes: Vec<usize> = input
+            .split_whitespace()
+            .skip(1) // Skip the word 'Piece'
+            .take(2) // Take the next two numbers
+            .map(|num| {
+                num.trim_end_matches(':')
+                    .parse()
+                    .expect("Failed to parse piece size")
+            })
+            .collect();
+
+        self.height = piece_sizes[1];
+    }
 }
 
 // Calculate the shortest distance to the oponent.
