@@ -1,0 +1,1 @@
+cd solution && cargo build --release && cd .. && mv solution/target/release/r2_d2 solution/r2_d2
