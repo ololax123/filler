@@ -6,154 +6,175 @@ pub struct Piece {
     pub grid: Vec<Vec<char>>,
 }
 
-impl Piece {
-    pub fn new() -> Self {
-        Piece {
-            height: 0,
-            width: 0,
-            grid: Vec::new(),
-        }
-    }
-    pub fn minimize(&mut self) {
-        //Strip all empty rows in the bottom and to the right
-    }
-    pub fn get_size(&mut self, input: &str) {
-        let piece_sizes: Vec<usize> = input
-            .split_whitespace()
-            .skip(1) // Skip the word 'Piece'
-            .take(2) // Take the next two numbers
-            .map(|num| {
-                num.trim_end_matches(':')
-                    .parse()
-                    .expect("Failed to parse piece size")
-            })
-            .collect();
+// Calculate the shortest distance to the oponent.
+pub fn short_distance(
+    grid: &Vec<Vec<char>>,
+    distance: f32,
+    play: &Vec<char>,
+    enemy: &Vec<char>,
+) -> f32 {
+    let mut min_dist = distance;
 
-        (self.width, self.height) = (piece_sizes[0], piece_sizes[1]);
-    }
-    pub fn place(
-        &self,
-        player: &mut Player,
-        go_x: bool,
-        go_y: bool,
-        input: String,
-    ) -> (usize, usize) {
-        // Parse the playing field from the input string
-        let field: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
-        // Find all possible placements where the piece overlaps with exactly one player's character
-        let mut valid_placements = Vec::new();
-        for y in 0..=field.len() {
-            if y > player.max_y {
-                continue;
-            }
-            for x in 4..=field[0].len() {
-                if x > player.max_x + 4 {
-                    continue;
-                }
-                if self.can_place_at(x, y, player, &field) {
-                    valid_placements.push((x - 4, y));
+    // Iterate rows.
+    for (yg, row) in grid.iter().enumerate() {
+        // iterate columns in row
+        for (xg, &cell) in row.iter().enumerate() {
+            // Check if we're in the cell.
+            if cell == play[1] {
+                // Then go for the oponent.
+                for (ye, enemy_row) in grid.iter().enumerate() {
+                    // check all chars in the row.
+                    for (xe, &enemy_cell) in enemy_row.iter().enumerate() {
+                        // Did we dind the enemy?`.
+                        if enemy.contains(&enemy_cell) {
+                            // Make some maths and find the distnace #Pythagoras
+                            let dist = (((ye as f32) - (yg as f32)).powf(2.)
+                                + ((xe as f32) - (xg as f32)).powf(2.))
+                            .sqrt();
+                            // If it's closer, save it.
+                            min_dist = min_dist.min(dist);
+                        }
+                    }
                 }
             }
         }
-        // If there are no valid placements, we cannot place the piece
-        if valid_placements.is_empty() {
-            valid_placements.push((0, 0));
-        }
-        // Determine the optimal placement based on go_x and go_y
-        let optimal_placement = self.find_optimal_placement(&valid_placements, go_x, go_y);
+    }
+    // Return the perfect solution
+    min_dist
+}
 
-        // Update max/min x/y
-        if player.max_x < optimal_placement.0 {
-            player.max_x = optimal_placement.0
-        }
-        if player.max_y < optimal_placement.1 {
-            player.max_y = optimal_placement.1
-        }
-        if player.min_x > optimal_placement.0 {
-            player.min_x = optimal_placement.0
-        }
-        if player.min_y > optimal_placement.1 {
-            player.min_y = optimal_placement.1
-        }
+pub fn place_piece(
+    grid: &Vec<Vec<char>>,
+    piece: &Vec<Vec<char>>,
+    play: &Vec<char>,
+    enemy: &Vec<char>,
+) -> (usize, usize) {
+    // Get everything needed to calculate the distance.
+    let grid_rows = grid[0].len();
+    let piece_rows = piece[0].len();
+    let mut distance = ((grid_rows as f32).powf(2.) + (grid.len() as f32).powf(2.)).sqrt(); // Max distance
+    let mut sol = (0, 0);
 
-        optimal_placement
+    //  Create a copy of the grid for modification
+    let (mut xmin, mut xmax, mut ymin, mut ymax) = (grid.len(), 0, grid_rows, 0);
+    for yg in 0..grid.len() {
+        for xg in 0..grid_rows {
+            // Replace opponent characters with valid characters.
+            if play.contains(&grid[yg][xg]) {
+                xmin = xmin.min(xg);
+                xmax = xmax.max(xg);
+                ymin = ymin.min(yg);
+                ymax = ymax.max(yg);
+            }
+        }
     }
 
-    // Helper function to determine if the piece can be placed at a given position
-    fn can_place_at(&self, x: usize, y: usize, player: &Player, field: &Vec<Vec<char>>) -> bool {
-        let mut player_overlap = 0;
+    // Set the limits for the piece placement.
+    let (mut xi, mut xf, mut yi, mut yf) = (
+        0,
+        grid_rows - piece_rows + 1,
+        0,
+        grid.len() - piece.len() + 1,
+    );
 
-        // Iterate over each cell in the piece's grid
-        for (dy, row) in self.grid.iter().enumerate() {
-            for (dx, &cell) in row.iter().enumerate() {
-                let field_x = x + dx;
-                let field_y = y + dy;
+    // adjust the limits if needed.
+    let temp = xmin as i32 - piece_rows as i32 - 1;
+    if temp > 0 {
+        xi = xmin - piece_rows + 1
+    }
+    if (xmax + piece_rows - 1) < grid_rows {
+        xf = xmax + 1
+    }
+    let temp = ymin as i32 - piece.len() as i32 + 1;
+    if temp > 0 {
+        yi = ymin - piece.len() + 1
+    }
+    if (ymax + piece.len() - 1) < grid.len() {
+        yf = ymax + 1
+    }
 
-                // Check if the piece is within the bounds of the field
-                if field_y >= field.len() || field_x >= field[0].len() {
+    // verify all the possible positions.
+    for yg in yi..yf {
+        for xg in xi..xf {
+            if put_piece(grid, piece, play, xg, yg) {
+                let min_dist = short_distance(
+                    &grid_with_piece(grid, piece, play, (xg, yg)),
+                    distance,
+                    play,
+                    enemy,
+                );
+                if min_dist < distance {
+                    distance = min_dist;
+                    sol = (xg, yg);
+                }
+            }
+        }
+    }
+    // Return the best solution.
+    sol
+}
+
+// Function to place a piece on a grid.
+
+pub fn grid_with_piece(
+    grid: &[Vec<char>],
+    piece: &[Vec<char>],
+    play: &[char],
+    coords: (usize, usize),
+) -> Vec<Vec<char>> {
+    // Create a modifyable copy
+    let mut new_grid = grid.to_vec();
+    let prows = piece[0].len(); // number of piece rows
+
+    // Replace with valid chars
+    for yg in 0..new_grid.len() {
+        for xg in 0..new_grid[0].len() {
+            if new_grid[yg][xg] == play[1] {
+                new_grid[yg][xg] = play[0]
+            }
+        }
+    }
+
+    for yp in 0..piece.len() {
+        for xp in 0..prows {
+            if piece[yp][xp] != '.' {
+                new_grid[yp + coords.1][xp + coords.0] = play[1]
+            }
+        }
+    }
+    new_grid
+}
+
+//Function to place the piece
+pub fn put_piece(
+    grid: &[Vec<char>],
+    piece: &[Vec<char>],
+    play: &[char],
+    xg: usize,
+    yg: usize,
+) -> bool {
+    let mut cross = 0; // Counter for valid intersections
+
+    // Go through each line (row) and column (val) of the piece
+    for (yp, row) in piece.iter().enumerate() {
+        for (xp, &val) in row.iter().enumerate() {
+            // Check if the cell is part of the piece
+            if val != '.' {
+                let cell = grid.get(yg + yp).and_then(|r| r.get(xg + xp));
+
+                match cell {
+                    Some(&c) if play.contains(&c) => cross += 1,
+                    Some(&c) if c != '.' => return false,
+                    _ => {}
+                }
+
+                // Return false if more than one valid intersection is found
+                if cross > 1 {
                     return false;
                 }
-                match (field[field_y][field_x], cell) {
-                    // If the cell in the piece is part of the piece ('O') and the field is empty ('.'), it's a valid placement
-                    ('.', 'O') => continue,
-
-                    // If the cell in the piece is part of the piece ('O') and the field has the player's character,
-                    // increment the overlap count
-                    (player_char, 'O') if player.start_chars.contains(player_char) => {
-                        player_overlap += 1;
-                        if player_overlap > 1 {
-                            return false;
-                        }
-                    }
-
-                    // If the cell in the piece is part of the piece ('O') and the field has an opponent's piece ('#'),
-                    // it's an invalid placement
-                    ('s', 'O') => {
-                        return false;
-                    }
-
-                    // If the cell in the piece is empty and the field has any character, it's also a valid placement
-                    (_, '.') => continue,
-
-                    // Any other case is invalid
-                    _ => {
-                        return false;
-                    }
-                }
             }
         }
-
-        // The placement is only valid if there is exactly one overlap with the player's characters
-
-        player_overlap == 1
     }
-    // Helper function to find the optimal placement from a list of valid placements
-    fn find_optimal_placement(
-        &self,
-        placements: &[(usize, usize)],
-        go_x: bool,
-        go_y: bool,
-    ) -> (usize, usize) {
-        placements
-            .iter()
-            .copied()
-            .max_by(|&(x1, y1), &(x2, y2)| {
-                match (go_x, go_y) {
-                    (true, false) => x1.cmp(&x2), // Prioritize furthest right
-                    (false, true) => y1.cmp(&y2), // Prioritize furthest bottom
-                    (true, true) => {
-                        // Prioritize bottom first, then right
-                        match y1.cmp(&y2) {
-                            std::cmp::Ordering::Equal => x1.cmp(&x2),
-                            other => other,
-                        }
-                    }
-                    _ => {
-                        // If neither direction is set to true, or both are false, return the first (this shouldn't happen)
-                        std::cmp::Ordering::Equal
-                    }
-                }
-            })
-            .expect("No valid placements found") // This assumes there is at least one valid placement
-    }
+    // Return true if exactly one valid intersection is found
+    cross == 1
 }
