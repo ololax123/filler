@@ -41,7 +41,7 @@ fn main() {
                 .next()
                 .expect("Expected Anfield grid line")
                 .expect("Failed to read line");
-            anfield_area.push(line.chars().collect::<Vec<char>>());
+            anfield_area.push(line.chars().skip(4).collect::<Vec<char>>());
         }
 
         //Skip down to piece
