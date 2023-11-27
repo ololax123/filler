@@ -2,6 +2,7 @@ use r2_d2::anfield::*;
 use r2_d2::piece::*;
 use r2_d2::player::*;
 // use std::fs::OpenOptions;
+use r2_d2::fransfan::*;
 use std::io::{self, BufRead};
 
 fn main() {
@@ -71,8 +72,19 @@ fn main() {
         }
 
         //Calculate profits!
-        let (go_x, go_y) = player.priority_direction(&opponent);
-        let (place_x, place_y) = piece.place(&mut player, go_x, go_y, anfield_area);
+        // let (go_x, go_y) = player.priority_direction(&opponent);
+        // let (place_x, place_y) = piece.place(&mut player, go_x, go_y, anfield_area);
+        let white_flag_land: Vec<Vec<char>> = anfield_area
+            .lines()
+            .map(|line| line.chars().skip(4).collect())
+            .collect();
+
+        let (place_x, place_y) = place_piece(
+            &white_flag_land,
+            &piece.grid,
+            &(player.start_chars.chars().collect()),
+            &(opponent.start_chars.chars().collect()),
+        );
         print!("{} {}\n", place_x, place_y);
     }
 }
