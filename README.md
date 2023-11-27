@@ -1,6 +1,6 @@
 use buildDocker to build the docker image
 Then use build.sh inside the docker to build the project
-```
+
 
 You can now perform the tests manually, or use our script to run them.
 
