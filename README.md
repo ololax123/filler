@@ -14,14 +14,14 @@ A virtual machine organizes the game :
 
 ## Usage:
 
-1. Use buildDocker to build the docker image
+1. Use buildDocker to build the docker image and launch into a shell inside the docker
    ```bash
-    ./buildDocker.sh
+    solution/buildDocker.sh
     ```
 
 2. Use build.sh inside the docker to build the project
    ```bash
-    ./solution/build.sh
+    solution/buildBot.sh
     ```
 
 

@@ -7,8 +7,8 @@ fn main() {
     //Start listening for input
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
-    let mut player = Player::new();
-    let mut opponent = Player::new();
+    let mut player = Player::default();
+    let mut opponent = Player::default();
 
     //First input should be which player we are, get it and save the info
     let line = lines
@@ -66,6 +66,6 @@ fn main() {
             &(player.start_chars),
             &(opponent.start_chars),
         );
-        print!("{} {}\n", place_x, place_y);
+        println!("{} {}", place_x, place_y);
     }
 }

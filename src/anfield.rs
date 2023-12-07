@@ -3,6 +3,11 @@ pub struct Anfield {
     pub width: usize,
 }
 
+impl Default for Anfield {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Anfield {
     pub fn new() -> Self {
         Anfield {

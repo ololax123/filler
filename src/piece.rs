@@ -2,7 +2,11 @@ pub struct Piece {
     pub height: usize,
     pub grid: Vec<Vec<char>>,
 }
-
+impl Default for Piece {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Piece {
     pub fn new() -> Self {
         Piece {
@@ -14,28 +18,16 @@ impl Piece {
         //Strip all empty rows in the bottom and to the right
     }
     pub fn get_size(&mut self, input: &str) {
-        let piece_sizes: Vec<usize> = input
+        self.height = input
             .split_whitespace()
-            .skip(1) // Skip the word 'Piece'
-            .take(2) // Take the next two numbers
-            .map(|num| {
-                num.trim_end_matches(':')
-                    .parse()
-                    .expect("Failed to parse piece size")
-            })
-            .collect();
-
-        self.height = piece_sizes[1];
+            .nth(2)
+            .and_then(|num| num.trim_end_matches(':').parse().ok())
+            .expect("Failed to parse piece size");
     }
 }
 
 // Calculate the shortest distance to the oponent.
-pub fn short_distance(
-    grid: &Vec<Vec<char>>,
-    distance: f32,
-    play: &Vec<char>,
-    enemy: &Vec<char>,
-) -> f32 {
+pub fn short_distance(grid: &[Vec<char>], distance: f32, play: &[char], enemy: &[char]) -> f32 {
     let mut min_dist = distance;
 
     // Iterate rows.
@@ -66,10 +58,10 @@ pub fn short_distance(
 }
 
 pub fn place_piece(
-    grid: &Vec<Vec<char>>,
-    piece: &Vec<Vec<char>>,
-    play: &Vec<char>,
-    enemy: &Vec<char>,
+    grid: &[Vec<char>],
+    piece: &[Vec<char>],
+    play: &[char],
+    enemy: &[char],
 ) -> (usize, usize) {
     // Get everything needed to calculate the distance.
     let grid_rows = grid[0].len();
@@ -79,8 +71,8 @@ pub fn place_piece(
 
     //  Create a copy of the grid for modification
     let (mut xmin, mut xmax, mut ymin, mut ymax) = (grid.len(), 0, grid_rows, 0);
-    for yg in 0..grid.len() {
-        for xg in 0..grid_rows {
+    for (yg, row) in grid.iter().enumerate() {
+        for (xg, _) in row.iter().enumerate() {
             // Replace opponent characters with valid characters.
             if play.contains(&grid[yg][xg]) {
                 xmin = xmin.min(xg);

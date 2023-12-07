@@ -38,6 +38,7 @@ def main():
     print("Player 1 won {} times.".format(player1_wins))
     print("Player 2 won {} times.".format(player2_wins))
     print("That's a {:.2f}% win rate for Player 1.".format(player1_wins / float(args.iterations) * 100))
+    print("   And a {:.2f}% win rate for Player 2.".format(player2_wins / float(args.iterations) * 100))
 
 if __name__ == "__main__":
     main()
